@@ -1,0 +1,26 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0px;
+  background-color: #e0e0e0;
+}
+
+.box {
+  width: 500px;
+  height: 500px;
+}
+
+.piece {
+  cursor: pointer;
+}
