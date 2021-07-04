@@ -6,6 +6,7 @@ class Piece {
     constructor(name, htmlElement) {
         this.checked = false;
         this.dataShow = null;
+        this.enabled = true;
         this.name = name;
         this.jqueryRef = $(htmlElement);
     }
@@ -73,6 +74,20 @@ class Piece {
         this.hide();
         return this;
     }
+    enable() {
+        if (!this.enabled) {
+            this.enabled = true;
+            this.jqueryRef.finish();
+            this.jqueryRef.fadeTo(150, 1.0);
+        }
+    }
+    disable() {
+        if (this.enabled) {
+            this.enabled = false;
+            this.jqueryRef.finish();
+            this.jqueryRef.fadeTo(150, 0.5);
+        }
+    }
 }
 Piece.dataHide = null;
 function createPairNameList(valueList, length) {
@@ -94,13 +109,14 @@ $(function () {
     // start dataHide
     Piece.startDataHide(function () {
         const jqueryRef = $(".piece");
+        let enabled = false;
         let timeout = 0;
         let pieceList = null;
         let piece1 = null;
         let piece2 = null;
         jqueryRef.each(function (index) {
             $(this).on("click", function () {
-                if (pieceList !== null) {
+                if (enabled && pieceList !== null) {
                     if (!pieceList[index].getChecked()) {
                         if (piece1 === null) {
                             piece1 = pieceList[index].show();
@@ -135,12 +151,15 @@ $(function () {
             piece2 = null;
             const pairNameList = createPairNameList(valueList, jqueryRef.length);
             pieceList = createPieceList(pairNameList, jqueryRef);
+            pieceList.forEach(piece => piece.disable());
             (function interval(index) {
                 if (index < pieceList.length) {
                     pieceList[index++].start(function () {
                         return window.setTimeout(() => interval(index), 50);
                     });
                 }
+                else
+                    enabled = true;
             })(0);
             window.clearTimeout(timeout);
         }

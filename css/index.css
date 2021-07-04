@@ -17,6 +17,7 @@ body {
 }
 
 .piece {
+  opacity: 0.5;
   cursor: pointer;
   width: 100px;
 }

@@ -15,6 +15,8 @@ class Piece {
 
   private dataShow: string | null = null;
 
+  private enabled: boolean = true;
+
   private static dataHide: string | null = null;
 
   public constructor(name: string, htmlElement: HTMLElement) {
@@ -150,6 +152,34 @@ class Piece {
 
   }
 
+  public enable() {
+
+    if (!this.enabled) {
+
+      this.enabled = true;
+
+      this.jqueryRef.finish();
+
+      this.jqueryRef.fadeTo(150, 1.0);
+
+    }
+
+  }
+
+  public disable() {
+
+    if (this.enabled) {
+
+      this.enabled = false;
+
+      this.jqueryRef.finish();
+
+      this.jqueryRef.fadeTo(150, 0.5);
+
+    }
+
+  }
+
 }
 
 function createPairNameList(valueList: string[], length: number) {
@@ -188,6 +218,8 @@ $(function () {
 
     const jqueryRef = $(".piece");
 
+    let enabled: boolean = false;
+
     let timeout: number = 0;
 
     let pieceList: Piece[] | null = null;
@@ -200,7 +232,7 @@ $(function () {
 
       $(this).on("click", function () {
 
-        if (pieceList !== null) {
+        if (enabled && pieceList !== null) {
 
           if (!pieceList[index].getChecked()) {
 
@@ -262,6 +294,8 @@ $(function () {
 
       pieceList = createPieceList(pairNameList, jqueryRef);
 
+      pieceList.forEach(piece => piece.disable());
+
       (function interval(index: number) {
 
         if (index < pieceList.length) {
@@ -273,6 +307,8 @@ $(function () {
           })
 
         }
+
+        else enabled = true;
 
       })(0);
 
