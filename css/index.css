@@ -16,12 +16,7 @@ body {
   background-color: #e0e0e0;
 }
 
-.box {
-  width: 500px;
-  height: 500px;
-}
-
 .piece {
   cursor: pointer;
-  max-width: 120px;
+  width: 100px;
 }
