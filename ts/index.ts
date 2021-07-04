@@ -60,6 +60,10 @@ class Piece {
 
   private toogle(name: string) {
 
+    const desc = `icone ${name}`;
+
+    this.jqueryRef.attr("alt", desc).attr("title", desc);
+
     this.jqueryRef.finish();
 
     this.jqueryRef.fadeTo(150, 0.0, () => {

@@ -23,4 +23,5 @@ body {
 
 .piece {
   cursor: pointer;
+  max-width: 120px;
 }
