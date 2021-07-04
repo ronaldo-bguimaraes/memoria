@@ -186,8 +186,6 @@ class Piece {
     // start effect
     this.jqueryRef.fadeTo(150, 0.5).fadeTo(150, 1.0);
 
-    return true;
-
   }
 
 }
@@ -325,9 +323,17 @@ $(function () {
 
     pieceList.forEach(function (piece) {
 
-      piece.start().then(function (finish) {
+      piece.start().then(function () {
 
-        if (finish) progressTo(++count / pieceList!.length * 100);
+        const value = ++count / pieceList!.length * 100;
+
+        progressTo(value);
+
+        if (value === 100) {
+
+
+
+        }
 
       })
 

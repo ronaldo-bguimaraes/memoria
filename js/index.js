@@ -95,7 +95,6 @@ class Piece {
         this.jqueryRef.finish();
         // start effect
         this.jqueryRef.fadeTo(150, 0.5).fadeTo(150, 1.0);
-        return true;
     }
 }
 Piece.dataHide = null;
@@ -172,9 +171,11 @@ $(function () {
         const pairNameList = createPairNameList(valueList, jqueryRef.length);
         pieceList = createPieceList(pairNameList, jqueryRef);
         pieceList.forEach(function (piece) {
-            piece.start().then(function (finish) {
-                if (finish)
-                    progressTo(++count / pieceList.length * 100);
+            piece.start().then(function () {
+                const value = ++count / pieceList.length * 100;
+                progressTo(value);
+                if (value === 100) {
+                }
             });
         });
         clearTimeout(timeout);
