@@ -146,7 +146,7 @@ class Piece {
 
   public async hide() {
 
-    if (this.dataShow !== null) {
+    if (Piece.dataHide !== null) {
 
       return this.toogle("pergunta", await Piece.getDataHide());
 
@@ -223,8 +223,6 @@ $(function () {
 
   const jqueryRef = $(".piece");
 
-  let count: number = 0;
-
   let timeout: number = 0;
 
   let pieceList: Piece[] | null = null;
@@ -294,24 +292,7 @@ $(function () {
 
   })
 
-  const progress = $("#progress");
-
-  function progressTo(value: number) {
-
-    return progress.width(`${value}%`).attr("aria-valuenow", value);
-
-  }
-
   function start() {
-
-    // reset count
-    count = 0;
-
-    // reset progress
-    progress.hide();
-
-    // reset progress
-    progressTo(0).show();
 
     piece1 = null;
 
@@ -321,23 +302,7 @@ $(function () {
 
     pieceList = createPieceList(pairNameList, jqueryRef);
 
-    pieceList.forEach(function (piece) {
-
-      piece.start().then(function () {
-
-        const value = ++count / pieceList!.length * 100;
-
-        progressTo(value);
-
-        if (value === 100) {
-
-
-
-        }
-
-      })
-
-    })
+    pieceList.forEach(piece => piece.start());
 
     clearTimeout(timeout);
 

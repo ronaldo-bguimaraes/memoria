@@ -73,7 +73,7 @@ class Piece {
         return null;
     }
     async hide() {
-        if (this.dataShow !== null) {
+        if (Piece.dataHide !== null) {
             return this.toogle("pergunta", await Piece.getDataHide());
         }
         return null;
@@ -115,7 +115,6 @@ function createPieceList(pairNameList, jqueryRef) {
 // document ready
 $(function () {
     const jqueryRef = $(".piece");
-    let count = 0;
     let timeout = 0;
     let pieceList = null;
     let piece1 = null;
@@ -155,29 +154,12 @@ $(function () {
             }
         });
     });
-    const progress = $("#progress");
-    function progressTo(value) {
-        return progress.width(`${value}%`).attr("aria-valuenow", value);
-    }
     function start() {
-        // reset count
-        count = 0;
-        // reset progress
-        progress.hide();
-        // reset progress
-        progressTo(0).show();
         piece1 = null;
         piece2 = null;
         const pairNameList = createPairNameList(valueList, jqueryRef.length);
         pieceList = createPieceList(pairNameList, jqueryRef);
-        pieceList.forEach(function (piece) {
-            piece.start().then(function () {
-                const value = ++count / pieceList.length * 100;
-                progressTo(value);
-                if (value === 100) {
-                }
-            });
-        });
+        pieceList.forEach(piece => piece.start());
         clearTimeout(timeout);
     }
     // inicia
