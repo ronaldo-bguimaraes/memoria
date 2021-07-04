@@ -18,6 +18,28 @@ function shuffle(...array: any[]) {
 
 }
 
+async function getDataURL(src: string) {
+
+  const response = await fetch(src);
+
+  const blob = await response.blob();
+
+  const reader = new FileReader();
+
+  return new Promise<string>(function (resolve, reject) {
+
+    reader.addEventListener("loadend", () => {
+
+      resolve(<string>reader.result);
+
+    })
+
+    reader.readAsDataURL(blob);
+
+  })
+
+}
+
 class Piece {
 
   private name: string;
@@ -26,11 +48,45 @@ class Piece {
 
   private checked: boolean = false;
 
+  private dataShow: string | null = null;
+
+  private static dataHide: string | null = null;
+
   public constructor(name: string, htmlElement: HTMLElement) {
 
     this.name = name;
 
     this.jqueryRef = $(htmlElement);
+
+  }
+
+  public async getDataShow() {
+
+    if (this.dataShow === null) {
+
+      return this.dataShow = await getDataURL(`./icons/${this.name}.png`);
+
+    }
+
+    else return this.dataShow;
+
+  }
+
+  public static async getDataHide() {
+
+    if (this.dataHide === null) {
+
+      return this.dataHide = await getDataURL(`./icons/pergunta.png`);
+
+    }
+
+    else return this.dataHide;
+
+  }
+
+  public getName() {
+
+    return this.name;
 
   }
 
@@ -58,7 +114,7 @@ class Piece {
 
   }
 
-  private toogle(name: string) {
+  private toogle(name: string, data: string) {
 
     const desc = `icone ${name}`;
 
@@ -68,7 +124,7 @@ class Piece {
 
     this.jqueryRef.fadeTo(150, 0.0, () => {
 
-      this.jqueryRef.attr("src", `./icons/${name}.png`);
+      this.jqueryRef.attr("src", data);
 
     }).fadeTo(150, 1.0);
 
@@ -76,15 +132,27 @@ class Piece {
 
   }
 
-  public show() {
+  public async show() {
 
-    return this.toogle(this.name);
+    if (this.dataShow !== null) {
+
+      return this.toogle(this.name, await this.getDataShow());
+
+    }
+
+    return null;
 
   }
 
-  public hide() {
+  public async hide() {
 
-    return this.toogle("pergunta");
+    if (this.dataShow !== null) {
+
+      return this.toogle("pergunta", await Piece.getDataHide());
+
+    }
+
+    return null;
 
   }
 
@@ -104,35 +172,21 @@ class Piece {
 
   }
 
-  public start() {
+  public async start() {
 
+    // preload
+    this.dataShow = await this.getDataShow();
+
+    // hide if show
     this.hide();
 
+    // finish animations
     this.jqueryRef.finish();
 
+    // start effect
     this.jqueryRef.fadeTo(150, 0.5).fadeTo(150, 1.0);
 
-  }
-
-  public static test(piece1: Piece | null, piece2: Piece | null) {
-
-    if (piece1 !== null && piece2 !== null) {
-
-      if (piece1.name === piece2.name) {
-
-        piece1.check();
-        piece2.check();
-
-      }
-
-      else {
-
-        piece1.hide();
-        piece2.hide();
-
-      }
-
-    }
+    return true;
 
   }
 
@@ -167,10 +221,11 @@ function createPieceList(pairNameList: string[], jqueryRef: JQuery<HTMLElement>)
 }
 
 // document ready
-
 $(function () {
 
   const jqueryRef = $(".piece");
+
+  let count: number = 0;
 
   let timeout: number = 0;
 
@@ -180,23 +235,39 @@ $(function () {
 
   let piece2: Piece | null = null;
 
-  function onclick(piece: Piece) {
+  async function onclick(piece: Piece) {
 
     if (!piece.getChecked()) {
 
       if (piece1 === null) {
 
-        piece1 = piece.show();
+        piece1 = await piece.show();
 
       }
 
       else if (piece1 !== piece && piece2 === null) {
 
-        piece2 = piece.show();
+        piece2 = await piece.show();
 
         timeout = setTimeout(function () {
 
-          Piece.test(piece1, piece2);
+          if (piece1 !== null && piece2 !== null) {
+
+            if (piece1.getName() === piece2.getName()) {
+
+              piece1.check();
+              piece2.check();
+
+            }
+
+            else {
+
+              piece1.hide();
+              piece2.hide();
+
+            }
+
+          }
 
           piece1 = null;
           piece2 = null;
@@ -225,7 +296,24 @@ $(function () {
 
   })
 
+  const progress = $("#progress");
+
+  function progressTo(value: number) {
+
+    return progress.width(`${value}%`).attr("aria-valuenow", value);
+
+  }
+
   function start() {
+
+    // reset count
+    count = 0;
+
+    // reset progress
+    progress.hide();
+
+    // reset progress
+    progressTo(0).show();
 
     piece1 = null;
 
@@ -235,11 +323,15 @@ $(function () {
 
     pieceList = createPieceList(pairNameList, jqueryRef);
 
-    for (const piece of pieceList) {
+    pieceList.forEach(function (piece) {
 
-      piece.start();
+      piece.start().then(function (finish) {
 
-    }
+        if (finish) progressTo(++count / pieceList!.length * 100);
+
+      })
+
+    })
 
     clearTimeout(timeout);
 
@@ -251,6 +343,7 @@ $(function () {
   // adiciona evento ao botao
   $("#restart").on("click", start);
 
+  // easter egg
   let over = false;
 
   $("#link").on("pointerover", function () {
