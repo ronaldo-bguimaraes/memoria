@@ -1,44 +1,9 @@
+import shuffle from "./shuffle.js";
+
+import getDataURL from "./data-url.js";
+
 // lista dos nomes dos icones
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
-
-// embaralhador de array
-function shuffle(...array: any[]) {
-
-  let _array = array.flat();
-
-  for (let i = 0; i < _array.length; i++) {
-
-    const j = Math.floor(Math.random() * _array.length);
-
-    [_array[i], _array[j]] = [_array[j], _array[i]];
-
-  }
-
-  return _array;
-
-}
-
-async function getDataURL(src: string) {
-
-  const response = await fetch(src);
-
-  const blob = await response.blob();
-
-  const reader = new FileReader();
-
-  return new Promise<string>(function (resolve, reject) {
-
-    reader.addEventListener("loadend", () => {
-
-      resolve(<string>reader.result);
-
-    })
-
-    reader.readAsDataURL(blob);
-
-  })
-
-}
 
 class Piece {
 
@@ -60,27 +25,27 @@ class Piece {
 
   }
 
-  public async getDataShow() {
+  public startDataShow(callback: Function) {
 
-    if (this.dataShow === null) {
+    const $this = this;
 
-      return this.dataShow = await getDataURL(`./icons/${this.name}.png`);
+    getDataURL(`./icons/${this.name}.png`, function (dataShow) {
 
-    }
+      callback($this.dataShow = dataShow);
 
-    else return this.dataShow;
+    })
 
   }
 
-  public static async getDataHide() {
+  public static startDataHide(callback: Function) {
 
-    if (this.dataHide === null) {
+    const $this = this;
 
-      return this.dataHide = await getDataURL(`./icons/pergunta.png`);
+    getDataURL(`./icons/pergunta.png`, function (dataHide) {
 
-    }
+      callback.call($this, $this.dataHide = dataHide);
 
-    else return this.dataHide;
+    })
 
   }
 
@@ -116,43 +81,41 @@ class Piece {
 
   private toogle(name: string, data: string) {
 
-    const desc = `icone ${name}`;
+    const alt = `icone ${name}`;
 
-    this.jqueryRef.attr("alt", desc).attr("title", desc);
+    this.jqueryRef.attr("alt", alt).attr("title", alt).finish();
 
-    this.jqueryRef.finish();
-
-    this.jqueryRef.fadeTo(150, 0.0, () => {
+    this.jqueryRef.animate({ marginTop: "-9px", marginBottom: "+9px", opacity: 0.5 }, 150, () => {
 
       this.jqueryRef.attr("src", data);
 
-    }).fadeTo(150, 1.0);
+    }).animate({ marginTop: "-0px", marginBottom: "+0px", opacity: 1.0 }, 150);
 
     return this;
 
   }
 
-  public async show() {
+  public show() {
 
     if (this.dataShow !== null) {
 
-      return this.toogle(this.name, await this.getDataShow());
+      this.toogle(this.name, this.dataShow);
 
     }
 
-    return null;
+    return this;
 
   }
 
-  public async hide() {
+  public hide() {
 
     if (Piece.dataHide !== null) {
 
-      return this.toogle("pergunta", await Piece.getDataHide());
+      this.toogle("pergunta", Piece.dataHide);
 
     }
 
-    return null;
+    return this;
 
   }
 
@@ -172,19 +135,18 @@ class Piece {
 
   }
 
-  public async start() {
+  public start(callback: Function) {
 
     // preload
-    this.dataShow = await this.getDataShow();
-
-    // hide if show
-    this.hide();
+    this.startDataShow(callback);
 
     // finish animations
     this.jqueryRef.finish();
 
-    // start effect
-    this.jqueryRef.fadeTo(150, 0.5).fadeTo(150, 1.0);
+    // hide if show
+    this.hide();
+
+    return this;
 
   }
 
@@ -221,151 +183,163 @@ function createPieceList(pairNameList: string[], jqueryRef: JQuery<HTMLElement>)
 // document ready
 $(function () {
 
-  const jqueryRef = $(".piece");
+  // start dataHide
+  Piece.startDataHide(function () {
 
-  let timeout: number = 0;
+    const jqueryRef = $(".piece");
 
-  let pieceList: Piece[] | null = null;
+    let timeout: number = 0;
 
-  let piece1: Piece | null = null;
+    let pieceList: Piece[] | null = null;
 
-  let piece2: Piece | null = null;
+    let piece1: Piece | null = null;
 
-  async function onclick(piece: Piece) {
+    let piece2: Piece | null = null;
 
-    if (!piece.getChecked()) {
+    jqueryRef.each(function (index) {
 
-      if (piece1 === null) {
+      $(this).on("click", function () {
 
-        piece1 = await piece.show();
+        if (pieceList !== null) {
 
-      }
+          if (!pieceList[index].getChecked()) {
 
-      else if (piece1 !== piece && piece2 === null) {
+            if (piece1 === null) {
 
-        piece2 = await piece.show();
-
-        timeout = setTimeout(function () {
-
-          if (piece1 !== null && piece2 !== null) {
-
-            if (piece1.getName() === piece2.getName()) {
-
-              piece1.check();
-              piece2.check();
+              piece1 = pieceList[index].show();
 
             }
 
-            else {
+            else if (piece1 !== pieceList[index] && piece2 === null) {
 
-              piece1.hide();
-              piece2.hide();
+              piece2 = pieceList[index].show();
+
+              timeout = window.setTimeout(function () {
+
+                if (piece1 !== null && piece2 !== null) {
+
+                  if (piece1.getName() === piece2.getName()) {
+
+                    piece1.check();
+                    piece2.check();
+
+                  }
+
+                  else {
+
+                    piece1.hide();
+                    piece2.hide();
+
+                  }
+
+                }
+
+                piece1 = null;
+                piece2 = null;
+
+              }, 800);
 
             }
+
+            else pieceList[index].wrong();
+          }
+
+          else pieceList[index].wrong();
+
+        }
+
+      })
+
+    })
+
+    function start() {
+
+      piece1 = null;
+
+      piece2 = null;
+
+      const pairNameList = createPairNameList(valueList, jqueryRef.length);
+
+      pieceList = createPieceList(pairNameList, jqueryRef);
+
+      (function interval(index: number) {
+
+        if (index < pieceList.length) {
+
+          pieceList[index++].start(function () {
+
+            return window.setTimeout(() => interval(index), 50);
+
+          })
+
+        }
+
+      })(0);
+
+      window.clearTimeout(timeout);
+
+    }
+
+    // inicia
+    start();
+
+    // adiciona evento ao botao
+    $("#restart").on("click", start);
+
+    // easter egg
+    let over = false;
+
+    $("#link").on("pointerover", function () {
+
+      over = true;
+
+    })
+
+    $("#link").on("pointerout", function () {
+
+      over = false;
+
+    })
+
+    $(document).on("keydown", function (event) {
+
+      if (over && event.key === "r") {
+
+        pieceList!.forEach(function (piece) {
+
+          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
+
+            piece.show();
+
+            piece.getJqueryRef().finish();
 
           }
 
-          piece1 = null;
-          piece2 = null;
-
-        }, 1000);
-
-      }
-
-      else piece.wrong();
-    }
-
-    else piece.wrong();
-  }
-
-  jqueryRef.each(function (index) {
-
-    $(this).on("click", function () {
-
-      if (pieceList !== null) {
-
-        onclick.call(this, pieceList[index]);
+        })
 
       }
 
     })
 
-  })
+    $(document).on("keyup", function (event) {
 
-  function start() {
+      if (event.key === "r") {
 
-    piece1 = null;
+        pieceList!.forEach(function (piece) {
 
-    piece2 = null;
+          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
 
-    const pairNameList = createPairNameList(valueList, jqueryRef.length);
+            piece.hide();
 
-    pieceList = createPieceList(pairNameList, jqueryRef);
+            piece.getJqueryRef().finish();
 
-    pieceList.forEach(piece => piece.start());
+          }
 
-    clearTimeout(timeout);
+        })
 
-  }
+      }
 
-  // inicia
-  start();
-
-  // adiciona evento ao botao
-  $("#restart").on("click", start);
-
-  // easter egg
-  let over = false;
-
-  $("#link").on("pointerover", function () {
-
-    over = true;
-
-  })
-
-  $("#link").on("pointerout", function () {
-
-    over = false;
-
-  })
-
-  $(document).on("keydown", function (event) {
-
-    if (over && event.key === "r") {
-
-      pieceList!.forEach(function (piece) {
-
-        if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
-
-          piece.show();
-
-          piece.getJqueryRef().finish();
-
-        }
-
-      })
-
-    }
-
-  })
-
-  $(document).on("keyup", function (event) {
-
-    if (event.key === "r") {
-
-      pieceList!.forEach(function (piece) {
-
-        if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
-
-          piece.hide();
-
-          piece.getJqueryRef().finish();
-
-        }
-
-      })
-
-    }
+    })
 
   })
 
