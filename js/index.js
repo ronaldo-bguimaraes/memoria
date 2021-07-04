@@ -34,7 +34,7 @@ class Piece {
     check() {
         this.jqueryRef.finish();
         this.checked = true;
-        this.jqueryRef.fadeTo(150, 0.2);
+        this.jqueryRef.fadeTo(150, 0.5);
         return this;
     }
     toogle(name, data) {
