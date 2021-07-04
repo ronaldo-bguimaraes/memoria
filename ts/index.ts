@@ -290,6 +290,8 @@ $(function () {
 
       piece2 = null;
 
+      enabled = false;
+
       const pairNameList = createPairNameList(valueList, jqueryRef.length);
 
       pieceList = createPieceList(pairNameList, jqueryRef);

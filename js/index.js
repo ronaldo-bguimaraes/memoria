@@ -149,6 +149,7 @@ $(function () {
         function start() {
             piece1 = null;
             piece2 = null;
+            enabled = false;
             const pairNameList = createPairNameList(valueList, jqueryRef.length);
             pieceList = createPieceList(pairNameList, jqueryRef);
             pieceList.forEach(piece => piece.disable());
