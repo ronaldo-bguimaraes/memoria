@@ -203,8 +203,6 @@ interface GameData {
 
 }
 
-
-
 function gameRule(gameData: GameData, piece: Piece) {
 
   // piece is not checked
@@ -274,7 +272,7 @@ function start(gameData: GameData, pieceElement: JQuery<HTMLElement>) {
 
   for (const piece of gameData.pieceList) {
 
-    piece.disable();
+    piece.finish().disable();
 
   }
 

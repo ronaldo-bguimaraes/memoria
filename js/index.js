@@ -137,7 +137,7 @@ function start(gameData, pieceElement) {
     const pairNameList = createPairNameList(valueList, pieceElement.length);
     gameData.pieceList = createPieceList(pairNameList, pieceElement);
     for (const piece of gameData.pieceList) {
-        piece.disable();
+        piece.finish().disable();
     }
     (function propagateStart(index) {
         if (index < gameData.pieceList.length) {
