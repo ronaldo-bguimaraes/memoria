@@ -13,15 +13,19 @@ class Piece {
         getDataURL(`./icons/${name}.png`, callback);
     }
     startDataShow(callback) {
-        Piece.startData(this.name, (dataShow) => {
-            callback(this.dataShow = dataShow);
-        });
+        if (this.dataShow === null) {
+            Piece.startData(this.name, (dataShow) => {
+                callback(this.dataShow = dataShow);
+            });
+        }
         return this;
     }
     static startDataHide(callback) {
-        Piece.startData("pergunta", (dataHide) => {
-            callback(this.dataHide = dataHide);
-        });
+        if (this.dataHide === null) {
+            Piece.startData("pergunta", (dataHide) => {
+                callback(this.dataHide = dataHide);
+            });
+        }
         return this;
     }
     getChecked() {
@@ -53,25 +57,24 @@ class Piece {
         }
         return this;
     }
-    finish() {
-        this.ref.finish();
-        return this;
-    }
     wrong() {
-        this.finish();
+        this.ref.finish();
         for (let i = 6; i >= 0; i -= 2) {
             this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
-                .animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
+                .animate({ marginLeft: `${-i}px`, marginRight: `${i}px` }, 50);
         }
         return this;
-    }
-    start(callback) {
-        // preload
-        return this.startDataShow(callback).finish().hide();
     }
     disable() {
         this.ref.finish().fadeTo(150, 0.5);
         return this;
+    }
+    finish() {
+        this.ref.finish();
+        return this;
+    }
+    start(callback) {
+        return this.startDataShow(callback).finish().hide();
     }
     static equals(piece1, piece2) {
         return piece1.name === piece2.name;

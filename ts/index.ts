@@ -33,11 +33,15 @@ class Piece {
 
   public startDataShow(callback: DataCallback) {
 
-    Piece.startData(this.name, (dataShow) => {
+    if (this.dataShow === null) {
 
-      callback(this.dataShow = dataShow);
+      Piece.startData(this.name, (dataShow) => {
 
-    });
+        callback(this.dataShow = dataShow);
+
+      });
+
+    }
 
     return this;
 
@@ -45,11 +49,15 @@ class Piece {
 
   public static startDataHide(callback: DataCallback) {
 
-    Piece.startData("pergunta", (dataHide) => {
+    if (this.dataHide === null) {
 
-      callback(this.dataHide = dataHide);
+      Piece.startData("pergunta", (dataHide) => {
 
-    });
+        callback(this.dataHide = dataHide);
+
+      });
+
+    }
 
     return this;
 
@@ -113,34 +121,19 @@ class Piece {
 
   }
 
-  public finish() {
-
-    this.ref.finish();
-
-    return this;
-
-  }
-
   public wrong() {
 
-    this.finish();
+    this.ref.finish();
 
     for (let i = 6; i >= 0; i -= 2) {
 
       this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
 
-        .animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
+        .animate({ marginLeft: `${-i}px`, marginRight: `${i}px` }, 50);
 
     }
 
     return this;
-
-  }
-
-  public start(callback: DataCallback) {
-
-    // preload
-    return this.startDataShow(callback).finish().hide();
 
   }
 
@@ -149,6 +142,20 @@ class Piece {
     this.ref.finish().fadeTo(150, 0.5);
 
     return this;
+
+  }
+
+  public finish() {
+
+    this.ref.finish();
+
+    return this;
+
+  }
+
+  public start(callback: DataCallback) {
+
+    return this.startDataShow(callback).finish().hide();
 
   }
 
@@ -318,11 +325,11 @@ function easterEgg(gameData: GameData) {
 
         }
 
-      })
+      });
 
     }
 
-  })
+  });
 
   $(document).on("keyup", function (event) {
 

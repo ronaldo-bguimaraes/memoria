@@ -1,6 +1,6 @@
-type Data = string | null;
-
 type DataURLCallback = (data: string) => void;
+
+type Data = string | null;
 
 type DataCallback = (data: Data) => void;
 
