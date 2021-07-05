@@ -1,6 +1,5 @@
 import shuffle from "./shuffle.js";
 import { getDataURL } from "./data-url.js";
-// lista dos nomes dos icones
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
 class Piece {
     constructor(name, htmlElement) {
