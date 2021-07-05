@@ -191,7 +191,7 @@ function createPieceList(pairNameList: string[], ref: JQuery<HTMLElement>) {
 
 interface GameData {
 
-  enabled: boolean;
+  freeMove: boolean;
 
   timeout: number;
 
@@ -206,7 +206,7 @@ interface GameData {
 function gameRule(gameData: GameData, piece: Piece) {
 
   // piece is not checked
-  if (gameData.enabled && !piece.getChecked()) {
+  if (gameData.freeMove && !piece.getChecked()) {
 
     // piece1 not selected
     if (gameData.piece1 === null) {
@@ -260,38 +260,42 @@ function gameRule(gameData: GameData, piece: Piece) {
 
 function start(gameData: GameData, pieceElement: JQuery<HTMLElement>) {
 
-  gameData.enabled = false;
+  if (gameData.freeMove) {
 
-  window.clearTimeout(gameData.timeout);
+    gameData.freeMove = false;
 
-  gameData.timeout = 0;
+    window.clearTimeout(gameData.timeout);
 
-  const pairNameList = createPairNameList(valueList, pieceElement.length);
+    gameData.timeout = 0;
 
-  gameData.pieceList = createPieceList(pairNameList, pieceElement);
+    const pairNameList = createPairNameList(valueList, pieceElement.length);
 
-  for (const piece of gameData.pieceList) {
+    gameData.pieceList = createPieceList(pairNameList, pieceElement);
 
-    piece.finish().disable();
+    for (const piece of gameData.pieceList) {
+
+      piece.disable();
+
+    }
+
+    (function propagateStart(index: number) {
+
+      if (index < gameData.pieceList.length) {
+
+        gameData.pieceList[index++].start(function () {
+
+          window.setTimeout(() => propagateStart(index), 50);
+
+        });
+
+      } else gameData.freeMove = true;
+
+    })(0);
+
+    gameData.piece1 = null;
+    gameData.piece2 = null;
 
   }
-
-  (function propagateStart(index: number) {
-
-    if (index < gameData.pieceList.length) {
-
-      gameData.pieceList[index++].start(function () {
-
-        return window.setTimeout(() => propagateStart(index), 50);
-
-      });
-
-    } else gameData.enabled = true;
-
-  })(0);
-
-  gameData.piece1 = null;
-  gameData.piece2 = null;
 
 }
 
@@ -313,7 +317,7 @@ function easterEgg(gameData: GameData) {
 
   $(document).on("keydown", function (event) {
 
-    if (gameData.enabled && over && event.key === "r") {
+    if (gameData.freeMove && over && event.key === "r") {
 
       gameData.pieceList!.forEach(function (piece) {
 
@@ -359,7 +363,7 @@ $(function () {
 
     const gameData: GameData = {
 
-      enabled: false,
+      freeMove: true,
 
       timeout: 0,
 
