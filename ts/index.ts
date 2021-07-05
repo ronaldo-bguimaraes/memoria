@@ -182,6 +182,168 @@ function createPieceList(pairNameList: string[], ref: JQuery<HTMLElement>) {
 
 }
 
+interface GameData {
+
+  enabled: boolean;
+
+  timeout: number;
+
+  pieceList: Piece[] | null;
+
+  piece1: Piece | null;
+
+  piece2: Piece | null;
+
+}
+
+
+
+function gameRule(gameData: GameData, piece: Piece) {
+
+  // piece is not checked
+  if (gameData.enabled && !piece.getChecked()) {
+
+    // piece1 not selected
+    if (gameData.piece1 === null) {
+
+      gameData.piece1 = piece.show();
+
+    } else if (gameData.piece1 !== piece && gameData.piece2 === null) {
+
+      gameData.piece2 = piece.show();
+
+      if (gameData.piece1 !== null && gameData.piece2 !== null) {
+
+        // pieces equals
+        if (Piece.equals(gameData.piece1, gameData.piece2)) {
+
+          gameData.timeout = window.setTimeout(() => {
+
+            if (gameData.piece1 !== null && gameData.piece2 !== null) {
+
+              gameData.piece1.check();
+              gameData.piece2.check();
+
+              gameData.piece1 = null;
+              gameData.piece2 = null;
+
+            }
+
+          }, 400);
+
+        } else gameData.timeout = window.setTimeout(() => {
+
+          if (gameData.piece1 !== null && gameData.piece2 !== null) {
+
+            gameData.piece1.hide();
+            gameData.piece2.hide();
+
+            gameData.piece1 = null;
+            gameData.piece2 = null;
+
+          }
+
+        }, 800);
+
+      }
+
+    } else piece.wrong();
+
+  } else piece.wrong();
+
+}
+
+function start(gameData: GameData, pieceElement: JQuery<HTMLElement>) {
+
+  gameData.enabled = false;
+
+  window.clearTimeout(gameData.timeout);
+
+  gameData.timeout = 0;
+
+  const pairNameList = createPairNameList(valueList, pieceElement.length);
+
+  gameData.pieceList = createPieceList(pairNameList, pieceElement);
+
+  for (const piece of gameData.pieceList) {
+
+    piece.disable();
+
+  }
+
+  (function propagateStart(index: number) {
+
+    if (index < gameData.pieceList.length) {
+
+      gameData.pieceList[index++].start(function () {
+
+        return window.setTimeout(() => propagateStart(index), 50);
+
+      });
+
+    } else gameData.enabled = true;
+
+  })(0);
+
+  gameData.piece1 = null;
+  gameData.piece2 = null;
+
+}
+
+function easterEgg(gameData: GameData) {
+
+  let over = false;
+
+  $("#link").on("pointerover", function () {
+
+    over = true;
+
+  });
+
+  $("#link").on("pointerout", function () {
+
+    over = false;
+
+  });
+
+  $(document).on("keydown", function (event) {
+
+    if (gameData.enabled && over && event.key === "r") {
+
+      gameData.pieceList!.forEach(function (piece) {
+
+        if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+
+          piece.show().finish();
+
+        }
+
+      })
+
+    }
+
+  })
+
+  $(document).on("keyup", function (event) {
+
+    if (event.key === "r") {
+
+      gameData.pieceList!.forEach(function (piece) {
+
+        if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+
+          piece.hide().finish();
+
+        }
+
+      });
+
+    }
+
+  });
+
+}
+
 // document ready
 $(function () {
 
@@ -190,15 +352,19 @@ $(function () {
 
     const pieceElement = $(".piece");
 
-    let enabled: boolean = false;
+    const gameData: GameData = {
 
-    let timeout: number = 0;
+      enabled: false,
 
-    let pieceList: Piece[] | null = null;
+      timeout: 0,
 
-    let piece1: Piece | null = null;
+      pieceList: null,
 
-    let piece2: Piece | null = null;
+      piece1: null,
+
+      piece2: null
+
+    }
 
     pieceElement.each(function (index) {
 
@@ -206,58 +372,9 @@ $(function () {
       $(this).on("click", function () {
 
         // enable to click and pieceList exists 
-        if (enabled && pieceList !== null) {
+        if (gameData.pieceList !== null) {
 
-          // piece is not checked
-          if (!pieceList[index].getChecked()) {
-
-            // piece1 not selected
-            if (piece1 === null) {
-
-              piece1 = pieceList[index].show();
-
-            } else if (piece1 !== pieceList[index] && piece2 === null) {
-
-              piece2 = pieceList[index].show();
-
-              if (piece1 !== null && piece2 !== null) {
-
-                // pieces equals
-                if (Piece.equals(piece1, piece2)) {
-
-                  timeout = window.setTimeout(() => {
-
-                    if (piece1 !== null && piece2 !== null) {
-
-                      piece1.check();
-                      piece2.check();
-
-                      piece1 = null;
-                      piece2 = null;
-
-                    }
-
-                  }, 400);
-
-                } else timeout = window.setTimeout(() => {
-
-                  if (piece1 !== null && piece2 !== null) {
-
-                    piece1.hide();
-                    piece2.hide();
-
-                    piece1 = null;
-                    piece2 = null;
-
-                  }
-
-                }, 800);
-
-              }
-
-            } else pieceList[index].wrong();
-
-          } else pieceList[index].wrong();
+          gameRule(gameData, gameData.pieceList[index]);
 
         }
 
@@ -265,99 +382,18 @@ $(function () {
 
     });
 
-    function start() {
-
-      enabled = false;
-
-      window.clearTimeout(timeout);
-
-      timeout = 0;
-
-      const pairNameList = createPairNameList(valueList, pieceElement.length);
-
-      pieceList = createPieceList(pairNameList, pieceElement);
-
-      for (const piece of pieceList) {
-
-        piece.disable();
-
-      }
-
-      (function interval(index: number) {
-
-        if (index < pieceList.length) {
-
-          pieceList[index++].start(function () {
-
-            return window.setTimeout(() => interval(index), 50);
-
-          });
-
-        } else enabled = true;
-
-      })(0);
-
-      piece1 = null;
-      piece2 = null;
-
-    }
-
     // inicia
-    start();
+    start(gameData, pieceElement);
 
     // adiciona evento ao botao
-    $("#restart").on("click", start);
+    $("#restart").on("click", function () {
+
+      start(gameData, pieceElement);
+
+    });
 
     // easter egg
-    let over = false;
-
-    $("#link").on("pointerover", function () {
-
-      over = true;
-
-    });
-
-    $("#link").on("pointerout", function () {
-
-      over = false;
-
-    });
-
-    $(document).on("keydown", function (event) {
-
-      if (enabled && over && event.key === "r") {
-
-        pieceList!.forEach(function (piece) {
-
-          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
-
-            piece.show().finish();
-
-          }
-
-        })
-
-      }
-
-    })
-
-    $(document).on("keyup", function (event) {
-
-      if (event.key === "r") {
-
-        pieceList!.forEach(function (piece) {
-
-          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
-
-            piece.hide().finish();
-
-          }
-
-        });
-
-      }
-
-    });
+    easterEgg(gameData);
 
   });
 
