@@ -1,43 +1,44 @@
 import shuffle from "./shuffle.js";
-import getDataURL from "./data-url.js";
+import { getDataURL } from "./data-url.js";
 // lista dos nomes dos icones
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
 class Piece {
     constructor(name, htmlElement) {
         this.checked = false;
         this.dataShow = null;
-        this.enabled = true;
         this.name = name;
-        this.jqueryRef = $(htmlElement);
+        this.ref = $(htmlElement);
+    }
+    static startData(name, callback) {
+        getDataURL(`./icons/${name}.png`, callback);
     }
     startDataShow(callback) {
-        getDataURL(`./icons/${this.name}.png`, (dataShow) => {
+        Piece.startData(this.name, (dataShow) => {
             callback(this.dataShow = dataShow);
         });
+        return this;
     }
     static startDataHide(callback) {
-        getDataURL(`./icons/pergunta.png`, (dataHide) => {
+        Piece.startData("pergunta", (dataHide) => {
             callback(this.dataHide = dataHide);
         });
-    }
-    getJqueryRef() {
-        return this.jqueryRef;
+        return this;
     }
     getChecked() {
         return this.checked;
     }
     check() {
         this.checked = true;
-        this.jqueryRef.finish();
-        this.jqueryRef.fadeTo(150, 0.5);
-        return null;
+        this.ref.finish().fadeTo(150, 0.5);
+        return this;
     }
     toogle(name, data) {
         const alt = `icone ${name}`;
-        this.jqueryRef.attr("alt", alt).attr("title", alt).finish();
-        this.jqueryRef.animate({ marginTop: "-9px", marginBottom: "+9px", opacity: 0.5 }, 150, () => {
-            this.jqueryRef.attr("src", data);
-        }).animate({ marginTop: "-0px", marginBottom: "+0px", opacity: 1.0 }, 150);
+        this.ref.attr("alt", alt)
+            .attr("title", alt).finish()
+            .animate({ marginTop: "-9px", marginBottom: "9px", opacity: 0.5 }, 150, function () {
+            $(this).attr("src", data);
+        }).animate({ marginTop: "0px", marginBottom: "0px", opacity: 1.0 }, 150);
         return this;
     }
     show() {
@@ -50,38 +51,27 @@ class Piece {
         if (Piece.dataHide !== null) {
             this.toogle("pergunta", Piece.dataHide);
         }
-        return null;
+        return this;
+    }
+    finish() {
+        this.ref.finish();
+        return this;
     }
     wrong() {
-        this.jqueryRef.finish();
+        this.finish();
         for (let i = 6; i >= 0; i -= 2) {
-            this.jqueryRef.animate({ marginLeft: `${+i}px`, marginRight: `${-i}px` }, 50);
-            this.jqueryRef.animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
+            this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
+                .animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
         }
         return this;
     }
     start(callback) {
         // preload
-        this.startDataShow(callback);
-        // finish animations
-        this.jqueryRef.finish();
-        // hide if show
-        this.hide();
-        return this;
-    }
-    enable() {
-        if (!this.enabled) {
-            this.enabled = true;
-            this.jqueryRef.finish();
-            this.jqueryRef.fadeTo(150, 1.0);
-        }
+        return this.startDataShow(callback).finish().hide();
     }
     disable() {
-        if (this.enabled) {
-            this.enabled = false;
-            this.jqueryRef.finish();
-            this.jqueryRef.fadeTo(150, 0.5);
-        }
+        this.ref.finish().fadeTo(150, 0.5);
+        return this;
     }
     static equals(piece1, piece2) {
         return piece1.name === piece2.name;
@@ -92,88 +82,87 @@ function createPairNameList(valueList, length) {
     const pairNameList = shuffle(valueList).slice(0, length / 2);
     return shuffle(pairNameList, pairNameList);
 }
-function createPieceList(pairNameList, jqueryRef) {
+function createPieceList(pairNameList, ref) {
     const pieceList = [];
-    jqueryRef.each(function (index) {
+    ref.each(function (index) {
         pieceList[index] = new Piece(pairNameList[index], this);
     });
     return pieceList;
-}
-function createDataGame() {
-    return {
-        enabled: false,
-        timeout: 0,
-        pieceList: null,
-        piece1: null,
-        piece2: null
-    };
 }
 // document ready
 $(function () {
     // start dataHide
     Piece.startDataHide(function () {
-        const jqueryRef = $(".piece");
-        const data = createDataGame();
-        jqueryRef.each(function (index) {
+        const pieceElement = $(".piece");
+        let enabled = false;
+        let timeout = 0;
+        let pieceList = null;
+        let piece1 = null;
+        let piece2 = null;
+        pieceElement.each(function (index) {
             // add onclick event
             $(this).on("click", function () {
                 // enable to click and pieceList exists 
-                if (data.enabled && data.pieceList !== null) {
+                if (enabled && pieceList !== null) {
                     // piece is not checked
-                    if (!data.pieceList[index].getChecked()) {
+                    if (!pieceList[index].getChecked()) {
                         // piece1 not selected
-                        if (data.piece1 === null) {
-                            data.piece1 = data.pieceList[index].show();
+                        if (piece1 === null) {
+                            piece1 = pieceList[index].show();
                         }
-                        // piece is not piece1 and piece2 not selected
-                        else if (data.piece1 !== data.pieceList[index] && data.piece2 === null) {
-                            data.piece2 = data.pieceList[index].show();
-                            if (data.piece1 !== null && data.piece2 !== null) {
+                        else if (piece1 !== pieceList[index] && piece2 === null) {
+                            piece2 = pieceList[index].show();
+                            if (piece1 !== null && piece2 !== null) {
                                 // pieces equals
-                                if (Piece.equals(data.piece1, data.piece2)) {
-                                    data.timeout = window.setTimeout(() => {
-                                        if (data.piece1 !== null && data.piece2 !== null) {
-                                            data.piece1 = data.piece1.check();
-                                            data.piece2 = data.piece2.check();
+                                if (Piece.equals(piece1, piece2)) {
+                                    timeout = window.setTimeout(() => {
+                                        if (piece1 !== null && piece2 !== null) {
+                                            piece1.check();
+                                            piece2.check();
+                                            piece1 = null;
+                                            piece2 = null;
                                         }
                                     }, 400);
                                 }
-                                // pieces different
                                 else
-                                    data.timeout = window.setTimeout(() => {
-                                        if (data.piece1 !== null && data.piece2 !== null) {
-                                            data.piece1 = data.piece1.hide();
-                                            data.piece2 = data.piece2.hide();
+                                    timeout = window.setTimeout(() => {
+                                        if (piece1 !== null && piece2 !== null) {
+                                            piece1.hide();
+                                            piece2.hide();
+                                            piece1 = null;
+                                            piece2 = null;
                                         }
                                     }, 800);
                             }
                         }
                         else
-                            data.pieceList[index].wrong();
+                            pieceList[index].wrong();
                     }
                     else
-                        data.pieceList[index].wrong();
+                        pieceList[index].wrong();
                 }
             });
         });
         function start() {
-            data.enabled = false;
-            window.clearTimeout(data.timeout);
-            data.timeout = 0;
-            const pairNameList = createPairNameList(valueList, jqueryRef.length);
-            data.pieceList = createPieceList(pairNameList, jqueryRef);
-            data.pieceList.forEach(piece => piece.disable());
+            enabled = false;
+            window.clearTimeout(timeout);
+            timeout = 0;
+            const pairNameList = createPairNameList(valueList, pieceElement.length);
+            pieceList = createPieceList(pairNameList, pieceElement);
+            for (const piece of pieceList) {
+                piece.disable();
+            }
             (function interval(index) {
-                if (index < data.pieceList.length) {
-                    data.pieceList[index++].start(function () {
+                if (index < pieceList.length) {
+                    pieceList[index++].start(function () {
                         return window.setTimeout(() => interval(index), 50);
                     });
                 }
                 else
-                    data.enabled = true;
+                    enabled = true;
             })(0);
-            data.piece1 = null;
-            data.piece2 = null;
+            piece1 = null;
+            piece2 = null;
         }
         // inicia
         start();
@@ -188,21 +177,19 @@ $(function () {
             over = false;
         });
         $(document).on("keydown", function (event) {
-            if (data.enabled && over && event.key === "r") {
-                data.pieceList.forEach(function (piece) {
-                    if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
-                        piece.show();
-                        piece.getJqueryRef().finish();
+            if (enabled && over && event.key === "r") {
+                pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
+                        piece.show().finish();
                     }
                 });
             }
         });
         $(document).on("keyup", function (event) {
             if (event.key === "r") {
-                data.pieceList.forEach(function (piece) {
-                    if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
-                        piece.hide();
-                        piece.getJqueryRef().finish();
+                pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
+                        piece.hide().finish();
                     }
                 });
             }

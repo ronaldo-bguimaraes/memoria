@@ -9,4 +9,4 @@ function getDataURL(src, callback) {
         reader.readAsDataURL(blob);
     });
 }
-export default getDataURL;
+export { getDataURL };

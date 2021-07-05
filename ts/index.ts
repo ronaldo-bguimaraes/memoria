@@ -1,25 +1,19 @@
 import shuffle from "./shuffle.js";
 
-import getDataURL from "./data-url.js";
+import { Data, DataURLCallback, DataCallback, getDataURL } from "./data-url.js";
 
 // lista dos nomes dos icones
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
-
-type Data = string | null;
-
-type DataCallback = (data: Data) => void;
 
 class Piece {
 
   private name: string;
 
-  private jqueryRef: JQuery<HTMLElement>;
+  private ref: JQuery<HTMLElement>;
 
   private checked: boolean = false;
 
   private dataShow: Data = null;
-
-  private enabled: boolean = true;
 
   private static dataHide: Data = null;
 
@@ -27,33 +21,37 @@ class Piece {
 
     this.name = name;
 
-    this.jqueryRef = $(htmlElement);
+    this.ref = $(htmlElement);
+
+  }
+
+  private static startData(name: string, callback: DataURLCallback) {
+
+    getDataURL(`./icons/${name}.png`, callback);
 
   }
 
   public startDataShow(callback: DataCallback) {
 
-    getDataURL(`./icons/${this.name}.png`, (dataShow) => {
+    Piece.startData(this.name, (dataShow) => {
 
       callback(this.dataShow = dataShow);
 
     });
 
+    return this;
+
   }
 
   public static startDataHide(callback: DataCallback) {
 
-    getDataURL(`./icons/pergunta.png`, (dataHide) => {
+    Piece.startData("pergunta", (dataHide) => {
 
       callback(this.dataHide = dataHide);
 
-    })
+    });
 
-  }
-
-  public getJqueryRef() {
-
-    return this.jqueryRef;
+    return this;
 
   }
 
@@ -67,11 +65,9 @@ class Piece {
 
     this.checked = true;
 
-    this.jqueryRef.finish();
+    this.ref.finish().fadeTo(150, 0.5);
 
-    this.jqueryRef.fadeTo(150, 0.5);
-
-    return null;
+    return this;
 
   }
 
@@ -79,13 +75,15 @@ class Piece {
 
     const alt = `icone ${name}`;
 
-    this.jqueryRef.attr("alt", alt).attr("title", alt).finish();
+    this.ref.attr("alt", alt)
 
-    this.jqueryRef.animate({ marginTop: "-9px", marginBottom: "+9px", opacity: 0.5 }, 150, () => {
+      .attr("title", alt).finish()
 
-      this.jqueryRef.attr("src", data);
+      .animate({ marginTop: "-9px", marginBottom: "9px", opacity: 0.5 }, 150, function () {
 
-    }).animate({ marginTop: "-0px", marginBottom: "+0px", opacity: 1.0 }, 150);
+        $(this).attr("src", data);
+
+      }).animate({ marginTop: "0px", marginBottom: "0px", opacity: 1.0 }, 150);
 
     return this;
 
@@ -111,19 +109,27 @@ class Piece {
 
     }
 
-    return null;
+    return this;
+
+  }
+
+  public finish() {
+
+    this.ref.finish();
+
+    return this;
 
   }
 
   public wrong() {
 
-    this.jqueryRef.finish();
+    this.finish();
 
     for (let i = 6; i >= 0; i -= 2) {
 
-      this.jqueryRef.animate({ marginLeft: `${+i}px`, marginRight: `${-i}px` }, 50);
+      this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
 
-      this.jqueryRef.animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
+        .animate({ marginLeft: `${-i}px`, marginRight: `${+i}px` }, 50);
 
     }
 
@@ -134,43 +140,15 @@ class Piece {
   public start(callback: DataCallback) {
 
     // preload
-    this.startDataShow(callback);
-
-    // finish animations
-    this.jqueryRef.finish();
-
-    // hide if show
-    this.hide();
-
-    return this;
-
-  }
-
-  public enable() {
-
-    if (!this.enabled) {
-
-      this.enabled = true;
-
-      this.jqueryRef.finish();
-
-      this.jqueryRef.fadeTo(150, 1.0);
-
-    }
+    return this.startDataShow(callback).finish().hide();
 
   }
 
   public disable() {
 
-    if (this.enabled) {
+    this.ref.finish().fadeTo(150, 0.5);
 
-      this.enabled = false;
-
-      this.jqueryRef.finish();
-
-      this.jqueryRef.fadeTo(150, 0.5);
-
-    }
+    return this;
 
   }
 
@@ -190,11 +168,11 @@ function createPairNameList(valueList: string[], length: number) {
 
 }
 
-function createPieceList(pairNameList: string[], jqueryRef: JQuery<HTMLElement>) {
+function createPieceList(pairNameList: string[], ref: JQuery<HTMLElement>) {
 
   const pieceList: Piece[] = [];
 
-  jqueryRef.each(function (index) {
+  ref.each(function (index) {
 
     pieceList[index] = new Piece(pairNameList[index], this);
 
@@ -204,96 +182,72 @@ function createPieceList(pairNameList: string[], jqueryRef: JQuery<HTMLElement>)
 
 }
 
-interface DataGame {
-
-  enabled: boolean;
-
-  timeout: number;
-
-  pieceList: Piece[] | null;
-
-  piece1: Piece | null;
-
-  piece2: Piece | null;
-
-}
-
-function createDataGame(): DataGame {
-
-  return {
-
-    enabled: false,
-
-    timeout: 0,
-
-    pieceList: null,
-
-    piece1: null,
-
-    piece2: null
-
-  }
-
-}
-
 // document ready
 $(function () {
 
   // start dataHide
   Piece.startDataHide(function () {
 
-    const jqueryRef = $(".piece");
+    const pieceElement = $(".piece");
 
-    const data = createDataGame();
+    let enabled: boolean = false;
 
-    jqueryRef.each(function (index) {
+    let timeout: number = 0;
+
+    let pieceList: Piece[] | null = null;
+
+    let piece1: Piece | null = null;
+
+    let piece2: Piece | null = null;
+
+    pieceElement.each(function (index) {
 
       // add onclick event
       $(this).on("click", function () {
 
         // enable to click and pieceList exists 
-        if (data.enabled && data.pieceList !== null) {
+        if (enabled && pieceList !== null) {
 
           // piece is not checked
-          if (!data.pieceList[index].getChecked()) {
+          if (!pieceList[index].getChecked()) {
 
             // piece1 not selected
-            if (data.piece1 === null) {
+            if (piece1 === null) {
 
-              data.piece1 = data.pieceList[index].show();
+              piece1 = pieceList[index].show();
 
-            }
+            } else if (piece1 !== pieceList[index] && piece2 === null) {
 
-            // piece is not piece1 and piece2 not selected
-            else if (data.piece1 !== data.pieceList[index] && data.piece2 === null) {
+              piece2 = pieceList[index].show();
 
-              data.piece2 = data.pieceList[index].show();
-
-              if (data.piece1 !== null && data.piece2 !== null) {
+              if (piece1 !== null && piece2 !== null) {
 
                 // pieces equals
-                if (Piece.equals(data.piece1, data.piece2)) {
+                if (Piece.equals(piece1, piece2)) {
 
-                  data.timeout = window.setTimeout(() => {
+                  timeout = window.setTimeout(() => {
 
-                    if (data.piece1 !== null && data.piece2 !== null) {
+                    if (piece1 !== null && piece2 !== null) {
 
-                      data.piece1 = data.piece1.check();
-                      data.piece2 = data.piece2.check();
+                      piece1.check();
+                      piece2.check();
+
+                      piece1 = null;
+                      piece2 = null;
 
                     }
 
                   }, 400);
 
-                }
+                } else timeout = window.setTimeout(() => {
 
-                // pieces different
-                else data.timeout = window.setTimeout(() => {
+                  if (piece1 !== null && piece2 !== null) {
 
-                  if (data.piece1 !== null && data.piece2 !== null) {
+                    piece1.hide();
+                    piece2.hide();
 
-                    data.piece1 = data.piece1.hide();
-                    data.piece2 = data.piece2.hide();
+                    piece1 = null;
+                    piece2 = null;
 
                   }
 
@@ -301,52 +255,50 @@ $(function () {
 
               }
 
-            }
+            } else pieceList[index].wrong();
 
-            else data.pieceList[index].wrong();
-          }
-
-          else data.pieceList[index].wrong();
+          } else pieceList[index].wrong();
 
         }
 
-      })
+      });
 
-    })
+    });
 
     function start() {
 
-      data.enabled = false;
+      enabled = false;
 
-      window.clearTimeout(data.timeout);
+      window.clearTimeout(timeout);
 
-      data.timeout = 0;
+      timeout = 0;
 
-      const pairNameList = createPairNameList(valueList, jqueryRef.length);
+      const pairNameList = createPairNameList(valueList, pieceElement.length);
 
-      data.pieceList = createPieceList(pairNameList, jqueryRef);
+      pieceList = createPieceList(pairNameList, pieceElement);
 
-      data.pieceList.forEach(piece => piece.disable());
+      for (const piece of pieceList) {
+
+        piece.disable();
+
+      }
 
       (function interval(index: number) {
 
-        if (index < data.pieceList.length) {
+        if (index < pieceList.length) {
 
-          data.pieceList[index++].start(function () {
+          pieceList[index++].start(function () {
 
             return window.setTimeout(() => interval(index), 50);
 
-          })
+          });
 
-        }
-
-        else data.enabled = true;
+        } else enabled = true;
 
       })(0);
 
-      data.piece1 = null;
-
-      data.piece2 = null;
+      piece1 = null;
+      piece2 = null;
 
     }
 
@@ -363,25 +315,23 @@ $(function () {
 
       over = true;
 
-    })
+    });
 
     $("#link").on("pointerout", function () {
 
       over = false;
 
-    })
+    });
 
     $(document).on("keydown", function (event) {
 
-      if (data.enabled && over && event.key === "r") {
+      if (enabled && over && event.key === "r") {
 
-        data.pieceList!.forEach(function (piece) {
+        pieceList!.forEach(function (piece) {
 
-          if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
+          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
 
-            piece.show();
-
-            piece.getJqueryRef().finish();
+            piece.show().finish();
 
           }
 
@@ -395,22 +345,20 @@ $(function () {
 
       if (event.key === "r") {
 
-        data.pieceList!.forEach(function (piece) {
+        pieceList!.forEach(function (piece) {
 
-          if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
+          if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
 
-            piece.hide();
-
-            piece.getJqueryRef().finish();
+            piece.hide().finish();
 
           }
 
-        })
+        });
 
       }
 
-    })
+    });
 
-  })
+  });
 
-})
+});

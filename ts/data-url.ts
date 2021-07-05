@@ -1,4 +1,10 @@
-function getDataURL(src: string, callback: (data: string) => void) {
+type Data = string | null;
+
+type DataURLCallback = (data: string) => void;
+
+type DataCallback = (data: Data) => void;
+
+function getDataURL(src: string, callback: DataURLCallback) {
 
   fetch(src).then(resp => resp.blob()).then((blob) => {
 
@@ -20,4 +26,4 @@ function getDataURL(src: string, callback: (data: string) => void) {
 
 }
 
-export default getDataURL;
+export { Data, DataURLCallback, DataCallback, getDataURL };
