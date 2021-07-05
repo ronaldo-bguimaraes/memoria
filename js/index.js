@@ -11,19 +11,14 @@ class Piece {
         this.jqueryRef = $(htmlElement);
     }
     startDataShow(callback) {
-        const $this = this;
-        getDataURL(`./icons/${this.name}.png`, function (dataShow) {
-            callback($this.dataShow = dataShow);
+        getDataURL(`./icons/${this.name}.png`, (dataShow) => {
+            callback(this.dataShow = dataShow);
         });
     }
     static startDataHide(callback) {
-        const $this = this;
-        getDataURL(`./icons/pergunta.png`, function (dataHide) {
-            callback.call($this, $this.dataHide = dataHide);
+        getDataURL(`./icons/pergunta.png`, (dataHide) => {
+            callback(this.dataHide = dataHide);
         });
-    }
-    getName() {
-        return this.name;
     }
     getJqueryRef() {
         return this.jqueryRef;
@@ -32,10 +27,10 @@ class Piece {
         return this.checked;
     }
     check() {
-        this.jqueryRef.finish();
         this.checked = true;
+        this.jqueryRef.finish();
         this.jqueryRef.fadeTo(150, 0.5);
-        return this;
+        return null;
     }
     toogle(name, data) {
         const alt = `icone ${name}`;
@@ -55,7 +50,7 @@ class Piece {
         if (Piece.dataHide !== null) {
             this.toogle("pergunta", Piece.dataHide);
         }
-        return this;
+        return null;
     }
     wrong() {
         this.jqueryRef.finish();
@@ -88,14 +83,14 @@ class Piece {
             this.jqueryRef.fadeTo(150, 0.5);
         }
     }
+    static equals(piece1, piece2) {
+        return piece1.name === piece2.name;
+    }
 }
 Piece.dataHide = null;
 function createPairNameList(valueList, length) {
-    const pairNameList = (function () {
-        const _pairNameList = shuffle(valueList).slice(0, length / 2);
-        return shuffle(_pairNameList, _pairNameList);
-    })();
-    return pairNameList;
+    const pairNameList = shuffle(valueList).slice(0, length / 2);
+    return shuffle(pairNameList, pairNameList);
 }
 function createPieceList(pairNameList, jqueryRef) {
     const pieceList = [];
@@ -104,65 +99,81 @@ function createPieceList(pairNameList, jqueryRef) {
     });
     return pieceList;
 }
+function createDataGame() {
+    return {
+        enabled: false,
+        timeout: 0,
+        pieceList: null,
+        piece1: null,
+        piece2: null
+    };
+}
 // document ready
 $(function () {
     // start dataHide
     Piece.startDataHide(function () {
         const jqueryRef = $(".piece");
-        let enabled = false;
-        let timeout = 0;
-        let pieceList = null;
-        let piece1 = null;
-        let piece2 = null;
+        const data = createDataGame();
         jqueryRef.each(function (index) {
+            // add onclick event
             $(this).on("click", function () {
-                if (enabled && pieceList !== null) {
-                    if (!pieceList[index].getChecked()) {
-                        if (piece1 === null) {
-                            piece1 = pieceList[index].show();
+                // enable to click and pieceList exists 
+                if (data.enabled && data.pieceList !== null) {
+                    // piece is not checked
+                    if (!data.pieceList[index].getChecked()) {
+                        // piece1 not selected
+                        if (data.piece1 === null) {
+                            data.piece1 = data.pieceList[index].show();
                         }
-                        else if (piece1 !== pieceList[index] && piece2 === null) {
-                            piece2 = pieceList[index].show();
-                            timeout = window.setTimeout(function () {
-                                if (piece1 !== null && piece2 !== null) {
-                                    if (piece1.getName() === piece2.getName()) {
-                                        piece1.check();
-                                        piece2.check();
-                                    }
-                                    else {
-                                        piece1.hide();
-                                        piece2.hide();
-                                    }
+                        // piece is not piece1 and piece2 not selected
+                        else if (data.piece1 !== data.pieceList[index] && data.piece2 === null) {
+                            data.piece2 = data.pieceList[index].show();
+                            if (data.piece1 !== null && data.piece2 !== null) {
+                                // pieces equals
+                                if (Piece.equals(data.piece1, data.piece2)) {
+                                    data.timeout = window.setTimeout(() => {
+                                        if (data.piece1 !== null && data.piece2 !== null) {
+                                            data.piece1 = data.piece1.check();
+                                            data.piece2 = data.piece2.check();
+                                        }
+                                    }, 400);
                                 }
-                                piece1 = null;
-                                piece2 = null;
-                            }, 800);
+                                // pieces different
+                                else
+                                    data.timeout = window.setTimeout(() => {
+                                        if (data.piece1 !== null && data.piece2 !== null) {
+                                            data.piece1 = data.piece1.hide();
+                                            data.piece2 = data.piece2.hide();
+                                        }
+                                    }, 800);
+                            }
                         }
                         else
-                            pieceList[index].wrong();
+                            data.pieceList[index].wrong();
                     }
                     else
-                        pieceList[index].wrong();
+                        data.pieceList[index].wrong();
                 }
             });
         });
         function start() {
-            piece1 = null;
-            piece2 = null;
-            enabled = false;
+            data.enabled = false;
+            window.clearTimeout(data.timeout);
+            data.timeout = 0;
             const pairNameList = createPairNameList(valueList, jqueryRef.length);
-            pieceList = createPieceList(pairNameList, jqueryRef);
-            pieceList.forEach(piece => piece.disable());
+            data.pieceList = createPieceList(pairNameList, jqueryRef);
+            data.pieceList.forEach(piece => piece.disable());
             (function interval(index) {
-                if (index < pieceList.length) {
-                    pieceList[index++].start(function () {
+                if (index < data.pieceList.length) {
+                    data.pieceList[index++].start(function () {
                         return window.setTimeout(() => interval(index), 50);
                     });
                 }
                 else
-                    enabled = true;
+                    data.enabled = true;
             })(0);
-            window.clearTimeout(timeout);
+            data.piece1 = null;
+            data.piece2 = null;
         }
         // inicia
         start();
@@ -177,9 +188,9 @@ $(function () {
             over = false;
         });
         $(document).on("keydown", function (event) {
-            if (over && event.key === "r") {
-                pieceList.forEach(function (piece) {
-                    if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
+            if (data.enabled && over && event.key === "r") {
+                data.pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
                         piece.show();
                         piece.getJqueryRef().finish();
                     }
@@ -188,8 +199,8 @@ $(function () {
         });
         $(document).on("keyup", function (event) {
             if (event.key === "r") {
-                pieceList.forEach(function (piece) {
-                    if (!piece.getChecked() && piece !== piece1 && piece !== piece2) {
+                data.pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== data.piece1 && piece !== data.piece2) {
                         piece.hide();
                         piece.getJqueryRef().finish();
                     }
