@@ -316,17 +316,21 @@ function easterEgg(gameData: GameData) {
 
   $(document).on("keydown", function (event) {
 
-    if (gameData.freeMove && over && event.key === "r") {
+    if (gameData.pieceList !== null) {
 
-      gameData.pieceList!.forEach(function (piece) {
+      if (gameData.freeMove && over && event.key === "r") {
 
-        if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+        gameData.pieceList.forEach(function (piece) {
 
-          piece.show().finish();
+          if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
 
-        }
+            piece.show().finish();
 
-      });
+          }
+
+        });
+
+      }
 
     }
 
@@ -336,15 +340,19 @@ function easterEgg(gameData: GameData) {
 
     if (event.key === "r") {
 
-      gameData.pieceList!.forEach(function (piece) {
+      if (gameData.pieceList !== null) {
 
-        if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+        gameData.pieceList.forEach(function (piece) {
 
-          piece.hide().finish();
+          if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
 
-        }
+            piece.hide().finish();
 
-      });
+          }
+
+        });
+
+      }
 
     }
 

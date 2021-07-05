@@ -161,21 +161,25 @@ function easterEgg(gameData) {
         over = false;
     });
     $(document).on("keydown", function (event) {
-        if (gameData.freeMove && over && event.key === "r") {
-            gameData.pieceList.forEach(function (piece) {
-                if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
-                    piece.show().finish();
-                }
-            });
+        if (gameData.pieceList !== null) {
+            if (gameData.freeMove && over && event.key === "r") {
+                gameData.pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+                        piece.show().finish();
+                    }
+                });
+            }
         }
     });
     $(document).on("keyup", function (event) {
         if (event.key === "r") {
-            gameData.pieceList.forEach(function (piece) {
-                if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
-                    piece.hide().finish();
-                }
-            });
+            if (gameData.pieceList !== null) {
+                gameData.pieceList.forEach(function (piece) {
+                    if (!piece.getChecked() && piece !== gameData.piece1 && piece !== gameData.piece2) {
+                        piece.hide().finish();
+                    }
+                });
+            }
         }
     });
 }
