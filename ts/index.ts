@@ -1,192 +1,10 @@
-import shuffle from "./shuffle.js";
+import "../node_modules/jquery/dist/jquery.min.js";
 
-import { Data, DataURLCallback, DataCallback, getDataURL } from "./data-url.js";
+import "../node_modules/bootstrap/dist/js/bootstrap.min.js";
+
+import { getPieceList, Piece } from "./piece.js";
 
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
-
-class Piece {
-
-  private name: string;
-
-  private ref: JQuery<HTMLElement>;
-
-  private checked: boolean = false;
-
-  private dataShow: Data = null;
-
-  private static dataHide: Data = null;
-
-  public constructor(name: string, htmlElement: HTMLElement) {
-
-    this.name = name;
-
-    this.ref = $(htmlElement);
-
-  }
-
-  private static startData(name: string, callback: DataURLCallback) {
-
-    getDataURL(`./icons/${name}.png`, callback);
-
-  }
-
-  public startDataShow(callback: DataCallback) {
-
-    if (this.dataShow === null) {
-
-      Piece.startData(this.name, (dataShow) => {
-
-        callback(this.dataShow = dataShow);
-
-      });
-
-    }
-
-    return this;
-
-  }
-
-  public static startDataHide(callback: DataCallback) {
-
-    if (this.dataHide === null) {
-
-      Piece.startData("pergunta", (dataHide) => {
-
-        callback(this.dataHide = dataHide);
-
-      });
-
-    }
-
-    return this;
-
-  }
-
-  public getChecked() {
-
-    return this.checked;
-
-  }
-
-  public check() {
-
-    this.checked = true;
-
-    this.ref.finish().fadeTo(150, 0.5);
-
-    return this;
-
-  }
-
-  private toogle(name: string, data: Data) {
-
-    const alt = `icone ${name}`;
-
-    this.ref.attr("alt", alt)
-
-      .attr("title", alt).finish()
-
-      .animate({ marginTop: "-9px", marginBottom: "9px", opacity: 0.5 }, 150, function () {
-
-        $(this).attr("src", data);
-
-      }).animate({ marginTop: "0px", marginBottom: "0px", opacity: 1.0 }, 150);
-
-    return this;
-
-  }
-
-  public show() {
-
-    if (this.dataShow !== null) {
-
-      this.toogle(this.name, this.dataShow);
-
-    }
-
-    return this;
-
-  }
-
-  public hide() {
-
-    if (Piece.dataHide !== null) {
-
-      this.toogle("pergunta", Piece.dataHide);
-
-    }
-
-    return this;
-
-  }
-
-  public wrong() {
-
-    this.ref.finish();
-
-    for (let i = 6; i >= 0; i -= 2) {
-
-      this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
-
-        .animate({ marginLeft: `${-i}px`, marginRight: `${i}px` }, 50);
-
-    }
-
-    return this;
-
-  }
-
-  public disable() {
-
-    this.ref.finish().fadeTo(150, 0.5);
-
-    return this;
-
-  }
-
-  public finish() {
-
-    this.ref.finish();
-
-    return this;
-
-  }
-
-  public start(callback: DataCallback) {
-
-    return this.startDataShow(callback).finish().hide();
-
-  }
-
-  public static equals(piece1: Piece, piece2: Piece) {
-
-    return piece1.name === piece2.name;
-
-  }
-
-}
-
-function createPairNameList(valueList: string[], length: number) {
-
-  const pairNameList = shuffle(valueList).slice(0, length / 2);
-
-  return shuffle(pairNameList, pairNameList);
-
-}
-
-function createPieceList(pairNameList: string[], ref: JQuery<HTMLElement>) {
-
-  const pieceList: Piece[] = [];
-
-  ref.each(function (index) {
-
-    pieceList[index] = new Piece(pairNameList[index], this);
-
-  })
-
-  return pieceList;
-
-}
 
 interface GameData {
 
@@ -267,9 +85,7 @@ function start(gameData: GameData, pieceElement: JQuery<HTMLElement>) {
 
     gameData.timeout = 0;
 
-    const pairNameList = createPairNameList(valueList, pieceElement.length);
-
-    gameData.pieceList = createPieceList(pairNameList, pieceElement);
+    gameData.pieceList = getPieceList(valueList, pieceElement);
 
     for (const piece of gameData.pieceList) {
 
@@ -364,7 +180,7 @@ function easterEgg(gameData: GameData) {
 $(function () {
 
   // start dataHide
-  Piece.startDataHide(function () {
+  Piece.startDataImageHide(function () {
 
     const pieceElement = $(".piece");
 

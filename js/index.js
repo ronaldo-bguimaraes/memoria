@@ -1,96 +1,7 @@
-import shuffle from "./shuffle.js";
-import { getDataURL } from "./data-url.js";
+import "../node_modules/jquery/dist/jquery.min.js";
+import "../node_modules/bootstrap/dist/js/bootstrap.min.js";
+import { getPieceList, Piece } from "./piece.js";
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
-class Piece {
-    constructor(name, htmlElement) {
-        this.checked = false;
-        this.dataShow = null;
-        this.name = name;
-        this.ref = $(htmlElement);
-    }
-    static startData(name, callback) {
-        getDataURL(`./icons/${name}.png`, callback);
-    }
-    startDataShow(callback) {
-        if (this.dataShow === null) {
-            Piece.startData(this.name, (dataShow) => {
-                callback(this.dataShow = dataShow);
-            });
-        }
-        return this;
-    }
-    static startDataHide(callback) {
-        if (this.dataHide === null) {
-            Piece.startData("pergunta", (dataHide) => {
-                callback(this.dataHide = dataHide);
-            });
-        }
-        return this;
-    }
-    getChecked() {
-        return this.checked;
-    }
-    check() {
-        this.checked = true;
-        this.ref.finish().fadeTo(150, 0.5);
-        return this;
-    }
-    toogle(name, data) {
-        const alt = `icone ${name}`;
-        this.ref.attr("alt", alt)
-            .attr("title", alt).finish()
-            .animate({ marginTop: "-9px", marginBottom: "9px", opacity: 0.5 }, 150, function () {
-            $(this).attr("src", data);
-        }).animate({ marginTop: "0px", marginBottom: "0px", opacity: 1.0 }, 150);
-        return this;
-    }
-    show() {
-        if (this.dataShow !== null) {
-            this.toogle(this.name, this.dataShow);
-        }
-        return this;
-    }
-    hide() {
-        if (Piece.dataHide !== null) {
-            this.toogle("pergunta", Piece.dataHide);
-        }
-        return this;
-    }
-    wrong() {
-        this.ref.finish();
-        for (let i = 6; i >= 0; i -= 2) {
-            this.ref.animate({ marginLeft: `${i}px`, marginRight: `${-i}px` }, 50)
-                .animate({ marginLeft: `${-i}px`, marginRight: `${i}px` }, 50);
-        }
-        return this;
-    }
-    disable() {
-        this.ref.finish().fadeTo(150, 0.5);
-        return this;
-    }
-    finish() {
-        this.ref.finish();
-        return this;
-    }
-    start(callback) {
-        return this.startDataShow(callback).finish().hide();
-    }
-    static equals(piece1, piece2) {
-        return piece1.name === piece2.name;
-    }
-}
-Piece.dataHide = null;
-function createPairNameList(valueList, length) {
-    const pairNameList = shuffle(valueList).slice(0, length / 2);
-    return shuffle(pairNameList, pairNameList);
-}
-function createPieceList(pairNameList, ref) {
-    const pieceList = [];
-    ref.each(function (index) {
-        pieceList[index] = new Piece(pairNameList[index], this);
-    });
-    return pieceList;
-}
 function gameRule(gameData, piece) {
     // piece is not checked
     if (gameData.freeMove && !piece.getChecked()) {
@@ -134,8 +45,7 @@ function start(gameData, pieceElement) {
         gameData.freeMove = false;
         window.clearTimeout(gameData.timeout);
         gameData.timeout = 0;
-        const pairNameList = createPairNameList(valueList, pieceElement.length);
-        gameData.pieceList = createPieceList(pairNameList, pieceElement);
+        gameData.pieceList = getPieceList(valueList, pieceElement);
         for (const piece of gameData.pieceList) {
             piece.disable();
         }
@@ -186,7 +96,7 @@ function easterEgg(gameData) {
 // document ready
 $(function () {
     // start dataHide
-    Piece.startDataHide(function () {
+    Piece.startDataImageHide(function () {
         const pieceElement = $(".piece");
         const gameData = {
             freeMove: true,

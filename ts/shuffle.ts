@@ -1,5 +1,4 @@
-// embaralhador de array
-function shuffle(...array: any[]) {
+function shuffleArray(...array: any[]) {
 
   let _array = array.flat();
 
@@ -15,4 +14,4 @@ function shuffle(...array: any[]) {
 
 }
 
-export default shuffle;
+export { shuffleArray };

@@ -1,5 +1,4 @@
-// embaralhador de array
-function shuffle(...array) {
+function shuffleArray(...array) {
     let _array = array.flat();
     for (let i = 0; i < _array.length; i++) {
         const j = Math.floor(Math.random() * _array.length);
@@ -7,4 +6,4 @@ function shuffle(...array) {
     }
     return _array;
 }
-export default shuffle;
+export { shuffleArray };
