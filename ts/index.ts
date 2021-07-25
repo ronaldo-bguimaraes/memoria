@@ -53,7 +53,9 @@ function gameRule(gameData: GameData, piece: Piece) {
 
           }, 400);
 
-        } else gameData.timeout = window.setTimeout(() => {
+        }
+        
+        else gameData.timeout = window.setTimeout(() => {
 
           if (gameData.piece1 !== null && gameData.piece2 !== null) {
 
