@@ -1,5 +1,5 @@
-import "../node_modules/jquery/dist/jquery.min.js";
-import "../node_modules/bootstrap/dist/js/bootstrap.min.js";
+import "../jquery/dist/jquery.min.js";
+import "../bootstrap/dist/js/bootstrap.min.js";
 import { getPieceList, Piece } from "./piece.js";
 const valueList = ["abacaxi", "banana", "batata-frita", "bolo", "brocolis", "cachorro-quente", "cenoura", "cereja", "croissant", "cupcake", "donut", "framboesa", "hamburguer", "limao", "maca", "melancia", "morango", "ovo-frito", "pera", "picole", "pipoca", "presunto", "queijo", "salsicha", "sorvete", "taco"];
 function gameRule(gameData, piece) {
