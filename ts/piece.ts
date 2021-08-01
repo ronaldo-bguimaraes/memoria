@@ -1,4 +1,4 @@
-import "../jquery/dist/jquery.min.js";
+import "../node_modules/jquery/dist/jquery.min.js";
 
 import { Data, DataCallback, DataURLCallback, getDataURL } from "./data-url.js";
 

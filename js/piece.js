@@ -1,4 +1,4 @@
-import "../jquery/dist/jquery.min.js";
+import "../node_modules/jquery/dist/jquery.min.js";
 import { getDataURL } from "./data-url.js";
 import { shuffleArray } from "./shuffle.js";
 class Piece {
